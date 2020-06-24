@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Synchronous loading via HTTP protocol</title>
+    <link rel="stylesheet" href="src/flipclock.css">
+
+    <script src="src/jquery.min.js"></script>
+    <script src="src/flipclock.js"></script>
+    <script src="src/adapter.min.js"></script>
+    <script src="src/janus.js"></script>
+    <style>
+        html,
+        body {
+            height: calc(100% - 0px);
+            margin: 0;
+            background: -webkit-radial-gradient(50% 50%, circle, #1f1954 30%, #121235 70%);
+            color: #ccc;
+        }
+
+        #content {
+            width: 100%;
+            height: 100%;
+        }
+
+        .content-inner {
+            padding: 10px; /* 设置整体内边距*/
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+        }
+
+        .grid-4x3 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            grid-gap: 10px; /* 设置中间各方格的间隔*/
+            grid-auto-flow: row;
+        }
+
+        .grid-4x3 > div {
+            background: -webkit-radial-gradient(left, circle, #121235 10%, #1f1954);
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .grid-4x3 > .grid-header {
+            grid-column-start: 1;
+            grid-column-end: 5;
+            padding-top: 8px;
+            padding-bottom: 8px;
+
+            border-radius: 0;
+        }
+
+        .grid-4x3 > .grid-footer {
+            grid-column-start: 1;
+            grid-column-end: 5;
+        }
+
+        .grid-4x3 > .grid-2x2 {
+            grid-area: 1 / 2 / 3 / 4;
+            padding: 0;
+        }
+
+        .video-content-inner {
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-3x3-inner {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            /*grid-gap: 10px;*/
+            grid-auto-flow: row;
+            /* background: url(src/wh-campus.png) center center no-repeat;*/
+            -webkit-background-size: 100% 100%;
+            background-size: 100% 100%;
+        }
+
+        .grid-3x3-inner > div {
+            display: flex;
+            align-items: center;
+            /*object-fit: fill;*/
+            overflow: hidden;
+            text-align: center;
+        }
+
+        video {
+            height: 100%;
+            width: 100%;
+            object-fit: fill;
+        }
+
+        #header {
+            width: calc(100% - 30px);
+            height: 20%;
+
+        }
+
+        .header-left {
+            width: calc(50% - 15px);
+            height: 100%;
+            float: left;
+        }
+
+        .header-right {
+            width: calc(50% - 15px);
+            height: 100%;
+            float: right;
+            justify-content: flex-end;
+            align-items: center;
+            display: flex;
+        }
+
+        #logo {
+            background: url(src/foxconnlogo_while.png) left center no-repeat;
+            background-size: 100% 72%;
+        }
+
+        .title {
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .linearborder {
+            border-bottom: 1px solid;
+            border-image: -webkit-linear-gradient(left, #121235, #38388e, #121235) 30 30;
+        }
+
+        #weather {
+            transform: scale(0.85) translate(140%);
+        }
+
+        #weather > iframe {
+            justify-content: flex-end;
+            align-items: center;
+            display: flex;
+        }
+
+        /* clock style*/
+        .clock-wrapper {
+            transform: scale(0.35) translateX(110%); /* 缩放大小和位置偏移*/
+        }
+
+        .flip-clock .flip-clock-group .flip-clock-list {
+            color: #eee; /* 字体颜色*/
+        }
+
+        .flip-clock .flip-clock-group .flip-clock-list .flip-clock-list-item-inner > .top,
+        .flip-clock .flip-clock-group .flip-clock-list .flip-clock-list-item-inner > .bottom {
+            background: #0099ff; /* 卡片背景色*/
+        }
+
+        .flip-clock .flip-clock-group .flip-clock-list .flip-clock-list-item-inner .top:before {
+            background: #0099ff; /* 卡片折痕颜色*/
+        }
+
+        .flip-clock .flip-clock-divider:before,
+        .flip-clock .flip-clock-divider:after {
+            background: #eee; /* 分隔符号颜色*/
+        }
+    </style>
+</head>
+
+<body>
+<div id="content">
+    <div class="content-inner grid-4x3">
+        <div>
+            <div id="header">
+                <div id="logo" class="header-left"></div>
+                <div class="header-right">
+
+                    <!--                    <div id="weather">-->
+                    <!--                        <iframe scrolling="no"-->
+                    <!--                                src="https://tianqiapi.com/api.php?style=ty&skin=durian&color=00ff99&city=武汉"-->
+                    <!--                                width="100%" height="56" frameborder="0" allowtransparency="true"></iframe>-->
+                    <!--                    </div>-->
+
+                    <div class="clock-wrapper">
+                        <div id="clock"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="title linearborder">园区安全</div>
+        </div>
+        <div>
+            <div class="title linearborder">门岗进出记录</div>
+        </div>
+        <div class="grid-2x2">
+            <div class="video-content-inner grid-3x3-inner" id="videos">
+                <div>
+                    <video id="remotevideo-1" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-2" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-3" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-4" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-5" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-6" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-7" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-8" oncontextmenu="return false;" autoplay></video>
+                </div>
+                <div>
+                    <video id="remotevideo-9" oncontextmenu="return false;" autoplay></video>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="title linearborder">异常告警</div>
+        </div>
+        <div>
+            <div class="title linearborder">门岗进出记录</div>
+        </div>
+        <div>
+            <div class="title linearborder">一线门岗人员流量</div>
+        </div>
+        <div>
+            <div class="title linearborder">一线门岗人员统计</div>
+        </div>
+        <div>
+            <div class="title linearborder">一线门岗车辆流量</div>
+        </div>
+        <div>
+            <div class="title linearborder">一线门岗车辆统计</div>
+        </div>
+        <!--<div class="grid-footer">footer</div>-->
+    </div>
+</div>
+
+
+<script>
+    // var server = 'ws://10.161.32.69:8188/janus';
+    // var server = 'ws://10.161.32.81:8188/janus';
+    // var server = 'http://10.161.32.161:8088/janus';
+    // var server = 'ws://10.202.16.240:8188/janus';
+    var server = 'http://10.202.16.240:8088/janus';
+
+    function initJanus(i) {
+        if (i >= 9) {
+            return null;
+        }
+
+        var janus = null;
+        var streamList = null;
+        var streaming = null;
+        var videoElement = $("#remotevideo-" + (i + 1));
+        var videoAttached = false;
+
+        Janus.init({
+            debug: true,
+            dependencies: Janus.useDefaultDependencies(), // or: Janus.useOldDependencies() to get the behaviour of previous Janus versions
+            callback: function () {
+                Janus.log('Initialed Janus');
+                janus = new Janus({
+                    server: server,
+                    success: function () {
+                        Janus.log("Instance <" + (i + 1) + ">" + "connected to " + server);
+                        janus.attach({
+                            plugin: "janus.plugin.streaming",
+                            success: function (pluginHandle) {
+                                Janus.log("Plugin " + "「janus.plugin.streaming」" + " attached!");
+                                streaming = pluginHandle;
+
+                                if (streamList === null || streamList === undefined || streamList) {
+                                    streaming.send({
+                                        "message": {
+                                            "request": "list"
+                                        },
+                                        success: function (result) {
+                                            streamList = result["list"];
+                                            Janus.log("::: streaming list :::");
+                                            streaming.send({
+                                                "message": {
+                                                    "request": "watch",
+                                                    id: parseInt(streamList[i].id)
+                                                },
+                                                success: function (result) {
+                                                    console.log('Watched stream: ' + (i + 1));
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            },
+                            error: function (cause) {
+                                Janus.log("Couldn't attach to the plugin");
+                                Janus.log(cause);
+                            },
+                            onmessage: function (msg, jsep) {
+                                Janus.log("Got a message/event (msg) from the plugin");
+                                if (jsep !== undefined && jsep !== null) {
+                                    Janus.log("Got a jsep from the plugin: ");
+                                    // Offer from the plugin, let's answer
+                                    Janus.log(jsep);
+                                    streaming.createAnswer({
+                                        jsep: jsep,
+                                        // We want recvonly audio/video and, if negotiated, datachannels
+                                        media: {
+                                            audioSend: false,
+                                            videoSend: false,
+                                            data: true
+                                        },
+                                        success: function (jsep) {
+                                            streaming.send({
+                                                "message": {
+                                                    "request": "start"
+                                                },
+                                                "jsep": jsep
+                                            });
+                                            Janus.log("Send anwser: {\"request\": \"start\"}");
+                                        },
+                                        error: function (error) {
+                                            Janus.error("WebRTC error:", error);
+                                        }
+                                    });
+                                }
+                            },
+                            onremotestream: function (stream) {
+                                Janus.log("We have a remote stream (working PeerConnection!) to display");
+                                if (!videoAttached) {
+                                    Janus.attachMediaStream(videoElement.get(0), stream);
+                                    console.log("Attached media stream to " + videoElement.attr('id'));
+                                    videoAttached = true;
+                                    i++;
+                                    // setTimeout(() => initJanus(i), 3000);
+                                    initJanus(i)
+                                }
+                            },
+                            oncleanup: function () {
+                                Janus.log("PeerConnection with the plugin closed, clean the UI; The plugin handle is still valid so we can create a new one");
+                            },
+                            detached: function () {
+                                Janus.log("Connection with the plugin closed, get rid of its features; The plugin handle is not valid anymore");
+                                streaming.send({
+                                    "message": {
+                                        "request": "stop"
+                                    }
+                                });
+                                streaming.hangup();
+                            }
+                        });
+                    },
+                    error: function (error) {
+                        Janus.error(error);
+                        window.location.reload();
+                    },
+                    destroyed: function () {
+                        window.location.reload();
+                    }
+                });
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        initJanus(0);
+    });
+</script>
+<!--clock-->
+<script type="text/javascript">
+    const el = document.querySelector('#clock');
+
+    const clock = new FlipClock(el, {
+        face: 'TwentyFourHourClock'
+    });
+</script>
+</body>
+</html>
+
